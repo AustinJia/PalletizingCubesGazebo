@@ -130,14 +130,18 @@ class GraspingClient(object):
         # find objects
         goal = FindGraspableObjectsGoal()
         goal.plan_grasps = True
+        print " find goal"
         self.find_client.send_goal(goal)
         self.find_client.wait_for_result(rospy.Duration(5.0))
+        print " find client"
         find_result = self.find_client.get_result()
 
         # remove previous objects
         for name in self.scene.getKnownCollisionObjects():
+            print "the object %s should be removed" %(name)
             self.scene.removeCollisionObject(name, False)
         for name in self.scene.getKnownAttachedObjects():
+            print "the object %s should be removed" %(name)
             self.scene.removeAttachedObject(name, False)
         self.scene.waitForSync()
 
@@ -146,10 +150,14 @@ class GraspingClient(object):
         for obj in find_result.objects:
             idx += 1
             obj.object.name = "object%d"%idx
+            print "-----------------------"
+            print obj.object.primitive_poses[0]
+            print " x: %d" %(obj.object.primitive_poses[0].position.x)
+            obj.object.name = "object%d"%idx
             self.scene.addSolidPrimitive(obj.object.name,
                                          obj.object.primitives[0],
                                          obj.object.primitive_poses[0],
-                                         wait = False)
+                                         use_service=True)
 
         for obj in find_result.support_surfaces:
             # extend surface to floor, and make wider since we have narrow field of view
@@ -163,7 +171,7 @@ class GraspingClient(object):
             self.scene.addSolidPrimitive(obj.name,
                                          obj.primitives[0],
                                          obj.primitive_poses[0],
-                                         wait = False)
+                                         use_service=True)
 
         self.scene.waitForSync()
 
@@ -186,7 +194,7 @@ class GraspingClient(object):
                obj.object.primitives[0].dimensions[0] > 0.07:
                 continue
             # has to located in +y 
-            if obj.object.primitive_poses[0].position.y < 0.0:
+            if obj.object.primitive_poses[0].position.y < -3.0:
                 print "has to located in +y"
                 continue
             # has to be on table
@@ -250,6 +258,7 @@ class GraspingClient(object):
 if __name__ == "__main__":
     # Create a node
     rospy.init_node("demo")
+    cur_z = None
 
     # Make sure sim time is working
     while not rospy.Time.now():
@@ -276,10 +285,12 @@ if __name__ == "__main__":
 
     rospy.loginfo("Moving to table...")
     rospy.loginfo("109")
-    move_base.goto(3.250, -3.418, 0.0)
+    # move_base.goto(3.250, -3.418, 0.0)
     rospy.loginfo("110")
-    move_base.goto(3.550, -3.418, 0.0)
+    # move_base.goto(3.450, -2.518, 0.0)
+    move_base.goto(3.250, -2.418, 0.0)
     rospy.loginfo("111")
+    # move_base.goto(3.350, -2.418, 0.0)
 
     # Raise the torso using 
     # just a controller
@@ -287,7 +298,7 @@ if __name__ == "__main__":
     # torso_action.move_to([0.4, ])
 
     # Point the head at the cube we want to pick
-    head_action.look_at(3.8, -3.18, 0.0, "map")
+    head_action.look_at(3.8, -2.75, 0.0, "map")
     rospy.loginfo("112")
 
     # Get block to pick
@@ -325,7 +336,16 @@ if __name__ == "__main__":
         rospy.loginfo("Placing object...")
         pose = PoseStamped()
         pose.pose = cube.primitive_poses[0]
-        pose.pose.position.z += 0.05
+        print "object pose :: "
+        print pose.pose 
+        pose.pose.position.x = -3
+        pose.pose.position.y = 4.8
+        if cur_z:
+                pose.pose.position.z = cur_z + 0.07
+                cur_z = pose.pose.position.z
+        else:
+            pose.pose.position.z += 0.01
+            cur_z = pose.pose.position.z
         pose.header.frame_id = cube.header.frame_id
         if grasping_client.place(cube, pose):
             break
