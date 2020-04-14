@@ -126,19 +126,24 @@ class GraspingClient(object):
         rospy.loginfo("Waiting for %s..." % find_topic)
         self.find_client = actionlib.SimpleActionClient(find_topic, FindGraspableObjectsAction)
         self.find_client.wait_for_server()
+        obj_cts = 0
 
     def updateScene(self):
         # find objects
         goal = FindGraspableObjectsGoal()
         goal.plan_grasps = True
+        print " find goal"
         self.find_client.send_goal(goal)
         self.find_client.wait_for_result(rospy.Duration(5.0))
+        print " find client"
         find_result = self.find_client.get_result()
 
         # remove previous objects
         for name in self.scene.getKnownCollisionObjects():
+            print "the object %s should be removed" %(name)
             self.scene.removeCollisionObject(name, False)
         for name in self.scene.getKnownAttachedObjects():
+            print "the object %s should be removed" %(name)
             self.scene.removeAttachedObject(name, False)
         self.scene.waitForSync()
 
@@ -148,15 +153,22 @@ class GraspingClient(object):
         for obj in find_result.objects:
             idx += 1
             obj.object.name = "object%d"%idx
+            print "-----------------------"
+            print obj.object.primitive_poses[0]
+            print " x: %d" %(obj.object.primitive_poses[0].position.x)
+            # if obj.object.primitive_poses[0].position.y > 0.0
             self.scene.addSolidPrimitive(obj.object.name,
                                          obj.object.primitives[0],
                                          obj.object.primitive_poses[0],
                                          use_service = False)
-            if obj.object.primitive_poses[0].position.x < 0.85:
+            # def 	addSolidPrimitive (self, name, solid, pose, use_service=True)
+            print "1, %d" %(idx)
+            if obj.object.primitive_poses[0].position.x < 1.25:
                 objects.append([obj, obj.object.primitive_poses[0].position.z])
 
         for obj in find_result.support_surfaces:
             # extend surface to floor, and make wider since we have narrow field of view
+            print "2,"
             height = obj.primitive_poses[0].position.z
             obj.primitives[0].dimensions = [obj.primitives[0].dimensions[0],
                                             1.5,  # wider
@@ -180,6 +192,8 @@ class GraspingClient(object):
         objects.sort(key=lambda object: object[1])
         objects.reverse()
         self.objects = [object[0] for object in objects]
+        rospy.loginfo("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        rospy.loginfo("number of objects...:::::::" + str(len(objects)))
         #for object in objects:
         #    print(object[0].object.name, object[1])
         #exit(-1)
@@ -189,6 +203,7 @@ class GraspingClient(object):
         for obj in self.objects:
             # need grasps
             if len(obj.grasps) < 1:
+                rospy.loginfo("must more than one object")
                 continue
             # check size
             if obj.object.primitives[0].dimensions[0] < 0.03 or \
@@ -198,9 +213,15 @@ class GraspingClient(object):
                obj.object.primitives[0].dimensions[0] < 0.03 or \
                obj.object.primitives[0].dimensions[0] > 0.25:
                 continue
+            # has to located in +y 
+            if obj.object.primitive_poses[0].position.y < 0.0:
+                print "has to located in +y"
+                continue
             # has to be on table
             if obj.object.primitive_poses[0].position.z < 0.5:
+                print "z has to larger than 0.5 "
                 continue
+            rospy.loginfo("object pose:")
             print obj.object.primitive_poses[0], obj.object.primitives[0]
             return obj.object, obj.grasps
         # nothing detected
@@ -276,6 +297,8 @@ class GraspingClient(object):
 if __name__ == "__main__":
     # Create a node
     rospy.init_node("demo")
+    ###
+    cur_z = None
 
     # Make sure sim time is working
     while not rospy.Time.now():
@@ -310,20 +333,25 @@ if __name__ == "__main__":
         while not rospy.is_shutdown() and not cube_in_grapper:
             rospy.loginfo("Picking object...")
             grasping_client.updateScene()
+            print "11"
             cube, grasps = grasping_client.getGraspableObject()
+            print "12"
             if cube == None:
                 rospy.logwarn("Perception failed.")
                 # grasping_client.intermediate_stow()
                 grasping_client.stow()
-                head_action.look_at(1.2, 0.0, 0.0, "base_link")
+                # head_action.look_at(1.2, 0.0, 0.0, "base_link")
+                head_action.look_at(1.2, 0.3, 0.0, "base_link")
                 continue
-
+            print "13"
             # Pick the block
             if grasping_client.pick(cube, grasps):
                 cube_in_grapper = True
                 break
+            print "14"
             rospy.logwarn("Grasping failed.")
             grasping_client.stow()
+            print "15"
             if fail_ct > 15:
                 fail_ct = 0
                 break
@@ -349,17 +377,31 @@ if __name__ == "__main__":
         while not rospy.is_shutdown() and cube_in_grapper:
             rospy.loginfo("Placing object...")
             pose = PoseStamped()
+            # pose.pose = cube.primitive_poses[0]
+            # pose.pose.position.y *= -1.0
+            # pose.pose.position.z += 0.02
+
+            ######################
             pose.pose = cube.primitive_poses[0]
-            pose.pose.position.y *= -1.0
-            pose.pose.position.z += 0.02
+            pose.pose.position.x = 0.8
+            pose.pose.position.y = -0.3
+            if cur_z:
+                pose.pose.position.z = cur_z + 0.07
+                cur_z = pose.pose.position.z
+            else:
+                pose.pose.position.z += 0.01
+                cur_z = pose.pose.position.z
+
+            
             pose.header.frame_id = cube.header.frame_id
+
             if grasping_client.place(cube, pose):
                 cube_in_grapper = False
                 break
             rospy.logwarn("Placing failed.")
             grasping_client.intermediate_stow()
             grasping_client.stow()
-            if fail_ct > 15:
+            if fail_ct > 25:
                 fail_ct = 0
                 break
             fail_ct += 1
