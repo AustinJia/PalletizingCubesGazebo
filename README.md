@@ -1,4 +1,5 @@
-# Fetch Gazebo
+# PalletizingCubesGazebo
+Demoing using fetch robot to palletize cubes using Fetch Robot in Gazebo environment
 
 This repository contains the Gazebo simulation for Fetch Robotics Fetch and
 Freight Research Edition Robots.
@@ -32,4 +33,7 @@ Fetch Gazebo Package | Melodic Devel
 fetch_gazebo | [![Build Status](http://build.ros.org/buildStatus/icon?job=Mdev__fetch_gazebo__ubuntu_bionic_amd64)](http://build.ros.org/view/Mdev/job/Mdev__fetch_gazebo__ubuntu_bionic_amd64/)
 fetch_gazebo_demo | | | |
 fetchit_challenge | | | |
+
+=======
+
 
