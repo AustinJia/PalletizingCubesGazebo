@@ -297,7 +297,6 @@ class GraspingClient(object):
 if __name__ == "__main__":
     # Create a node
     rospy.init_node("demo")
-    ###
     cur_z = None
 
     # Make sure sim time is working
@@ -377,11 +376,6 @@ if __name__ == "__main__":
         while not rospy.is_shutdown() and cube_in_grapper:
             rospy.loginfo("Placing object...")
             pose = PoseStamped()
-            # pose.pose = cube.primitive_poses[0]
-            # pose.pose.position.y *= -1.0
-            # pose.pose.position.z += 0.02
-
-            ######################
             pose.pose = cube.primitive_poses[0]
             pose.pose.position.x = 0.8
             pose.pose.position.y = -0.3
