@@ -3,8 +3,8 @@ Demoing using fetch robot to palletize cubes using Fetch Robot in Gazebo environ
 
 
 *Requirement:*
--Ubuntu 18.04
--ROS-melodic
+- Ubuntu 18.04
+- ROS-melodic
 
 
 Clone this repo in catkin_ws, and install
