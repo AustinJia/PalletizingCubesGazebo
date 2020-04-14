@@ -185,9 +185,15 @@ class GraspingClient(object):
                obj.object.primitives[0].dimensions[0] < 0.05 or \
                obj.object.primitives[0].dimensions[0] > 0.07:
                 continue
+            # has to located in +y 
+            if obj.object.primitive_poses[0].position.y < 0.0:
+                print "has to located in +y"
+                continue
             # has to be on table
             if obj.object.primitive_poses[0].position.z < 0.5:
                 continue
+            rospy.loginfo("object pose:")
+            print obj.object.primitive_poses[0], obj.object.primitives[0]
             return obj.object, obj.grasps
         # nothing detected
         return None, None
@@ -257,16 +263,32 @@ if __name__ == "__main__":
 
     # Move the base to be in front of the table
     # Demonstrates the use of the navigation stack
-    rospy.loginfo("Moving to table...")
-    move_base.goto(2.250, 3.118, 0.0)
-    move_base.goto(2.750, 3.118, 0.0)
+    # rospy.loginfo("Moving to table...")
+    # move_base.goto(2.250, 3.118, 0.0)
+    # move_base.goto(2.750, 3.118, 0.0)
 
-    # Raise the torso using just a controller
-    rospy.loginfo("Raising torso...")
-    torso_action.move_to([0.4, ])
+    # # Raise the torso using just a controller
+    # rospy.loginfo("Raising torso...")
+    # torso_action.move_to([0.4, ])
+
+    # # Point the head at the cube we want to pick
+    # head_action.look_at(3.7, 3.18, 0.0, "map")
+
+    rospy.loginfo("Moving to table...")
+    rospy.loginfo("109")
+    move_base.goto(3.250, -3.418, 0.0)
+    rospy.loginfo("110")
+    move_base.goto(3.550, -3.418, 0.0)
+    rospy.loginfo("111")
+
+    # Raise the torso using 
+    # just a controller
+    # rospy.loginfo("Raising torso...")
+    # torso_action.move_to([0.4, ])
 
     # Point the head at the cube we want to pick
-    head_action.look_at(3.7, 3.18, 0.0, "map")
+    head_action.look_at(3.8, -3.18, 0.0, "map")
+    rospy.loginfo("112")
 
     # Get block to pick
     while not rospy.is_shutdown():
