@@ -21,19 +21,19 @@
       <pose>-3 5 0 0 0 1.57</pose>
     </include>
     <include>
-      <uri>model://demo_cube_1</uri>
+      <uri>model://demo_cube</uri>
       <name>cube1</name>
-      <pose>3.8 -3.15 0.83 0 0 0</pose>
+      <pose>3.8 -2.75 0.83 0 0 0</pose>
     </include>
     <include>
       <uri>model://demo_cube</uri>
       <name>cube2</name>
-      <pose>3.9 -3.35 0.83 0 0 0</pose>
+      <pose>3.9 -2.95 0.83 0 0 0</pose>
     </include>
     <include>
       <uri>model://demo_cube</uri>
       <name>cube3</name>
-      <pose>3.95 -3.25 0.83 0 0 0</pose>
+      <pose>3.95 -2.85 0.83 0 0 0</pose>
     </include>
   </world>
 </sdf>
